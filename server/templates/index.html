@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FraudGuard AI | Real-Time Transaction Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Variables ───────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;
+  --card:#ffffff;
+  --accent:#2563eb;
+  --accent-hover:#1d4ed8;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --warning:#f59e0b;
+  --text-main:#111827;
+  --text-muted:#6b7280;
+  --border:#e5e7eb;
+  --radius-lg:16px;
+  --radius-md:10px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+}
+
+body {
+  font-family:'Inter', sans-serif;
+  background-color:var(--bg);
+  color:var(--text-main);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Background Pattern */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 15% 50%, rgba(37,99,235,0.05), transparent 50%),
+    radial-gradient(ellipse at 85% 30%, rgba(34,197,94,0.05), transparent 50%);
+  pointer-events:none;
+  z-index:-1;
+}
+
+/* ── Custom Buttons and Modals ───────────────────────────────────── */
+.btn-primary {
+  background: var(--accent); color: white; border: none; padding: 10px 20px;
+  border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s ease;
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+.modal {
+  position: fixed; inset: 0; background: rgba(2,6,23,0.8); z-index: 1000;
+  display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+}
+.modal-content {
+  background: var(--card); padding: 2rem; border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong); max-width: 900px; width: 90%;
+  max-height: 80vh; overflow-y: auto; color: var(--text-main); position: relative;
+}
+.close-btn { position: absolute; right: 20px; top: 15px; font-size: 2rem; cursor: pointer; color: var(--text-muted); }
+.close-btn:hover { color: var(--danger); }
+
+table.results-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+table.results-table th, table.results-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+table.results-table th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+table.results-table tr:hover { background: rgba(255,255,255,0.02); }
+.label-fraud { color: var(--danger); font-weight: bold; }
+.label-legit { color: var(--success); font-weight: bold; }
+/* ────────────────────────────────────────────────────────────────── */
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.hdr {
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;
+  position:sticky;
+  top:0;
+  z-index:50;
+  box-shadow:var(--shadow-sm);
+}
+.hdr-in {
+  max-width:1200px;
+  margin:0 auto;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.logo {
+  font-weight:800;
+  font-size:1.25rem;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:var(--text-main);
+}
+.logo-ic {
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:var(--accent);
+  color:white;
+  display:grid;
+  place-items:center;
+  font-size:1.2rem;
+  box-shadow:0 4px 10px rgba(37,99,235,0.2);
+}
+
+/* ── Status Badges ──────────────────────────────────────────────── */
+.status-badge {
+  padding:6px 14px;
+  border-radius:24px;
+  font-size:0.75rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  transition:all 0.3s ease;
+}
+.status-badge.live {
+  background:rgba(34,197,94,0.1);
+  color:var(--success);
+  border:1px solid rgba(34,197,94,0.2);
+}
+.status-badge.offline {
+  background:rgba(239,68,68,0.1);
+  color:var(--danger);
+  border:1px solid rgba(239,68,68,0.2);
+}
+.status-indicator {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:currentColor;
+}
+.live .status-indicator { animation: pulse 2s infinite; }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ── Main Layout & Dashboard Header ─────────────────────────────── */
+.wrap {
+  max-width:1200px;
+  margin:0 auto;
+  padding:2.5rem 2rem;
+  flex:1;
+  width:100%;
+}
+.dash-header {
+  margin-bottom:2rem;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+}
+.dash-title h1 {
+  font-size:1.8rem;
+  font-weight:800;
+  margin-bottom:0.25rem;
+}
+.dash-title p {
+  color:var(--text-muted);
+  font-size:0.95rem;
+}
+.dash-actions {
+  font-size:0.85rem;
+  color:var(--text-muted);
+  background:var(--card);
+  padding:8px 16px;
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+}
+
+/* ── Grid & Cards ────────────────────────────────────────────────── */
+.grid-layout {
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:1.5rem;
+  margin-bottom:1.5rem;
+}
+@media(max-width:850px){ .grid-layout{grid-template-columns:1fr;} }
+
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:1.75rem;
+  box-shadow:var(--shadow-md);
+  position:relative;
+  overflow:hidden;
+}
+.card h3 {
+  font-size:0.85rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  color:var(--text-muted);
+  margin-bottom:1.25rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.card h3::before {
+  content:'';
+  width:4px;
+  height:14px;
+  background:var(--accent);
+  border-radius:2px;
+}
+
+/* ── Data Rows ───────────────────────────────────────────────────── */
+.kv {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0.85rem 0;
+  border-bottom:1px dashed var(--border);
+  font-size:0.9rem;
+}
+.kv:last-child { border:none; padding-bottom:0; }
+.kv .k { color:var(--text-muted); font-weight:500; }
+.kv .v { font-weight:600; text-align:right;}
+
+/* ── Tags ────────────────────────────────────────────────────────── */
+.tag {
+  display:inline-flex;
+  align-items:center;
+  padding:4px 12px;
+  border-radius:8px;
+  font-size:0.75rem;
+  font-weight:700;
+  text-transform:uppercase;
+}
+.tag-fraud { background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid rgba(239,68,68,0.3); }
+.tag-legit { background:rgba(34,197,94,0.1); color:var(--success); border:1px solid rgba(34,197,94,0.3); }
+.tag-pending { background:rgba(107,114,128,0.1); color:var(--text-muted); border:1px solid var(--border); }
+
+/* ── Step progress bar ───────────────────────────────────────────── */
+.progress-container { margin:1.5rem 0; }
+.progress-labels {
+  display:flex; justify-content:space-between;
+  font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-bottom:0.5rem;
+}
+.progress { display:flex; gap:0.5rem; }
+.step-dot {
+  flex:1; height:8px; border-radius:4px;
+  background:var(--border); transition:all 0.4s ease;
+}
+.step-dot.active { background:var(--accent); box-shadow:0 0 8px rgba(37,99,235,0.4); }
+.step-dot.done { background:var(--success); }
+
+/* ── Verdict box ─────────────────────────────────────────────────── */
+.action-box {
+  margin-top:1.5rem;
+  padding:1.25rem;
+  background:#f8fafc;
+  border-radius:var(--radius-md);
+  border:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.action-box-title {
+  font-size:0.8rem; color:var(--text-muted); font-weight:700; letter-spacing:0.05em; margin-bottom:4px;
+}
+
+/* ── System requirements list ────────────────────────────────────── */
+.sys-list { list-style:none; }
+.sys-list li {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.9rem; padding:0.85rem 0; border-bottom:1px solid var(--border);
+}
+.sys-list li:last-child { border:none; }
+.sys-ok { color:var(--success); font-weight:600; display:flex; align-items:center; gap:6px; }
+.sys-fail { color:var(--danger); font-weight:600; display:flex; align-items:center; gap:6px; }
+
+/* ── Console Log ─────────────────────────────────────────────────── */
+.console {
+  background:#f8fafc; color:#0f172a;
+  font-family:monospace; font-size:0.85rem;
+  padding:1rem; border-radius:var(--radius-md);
+  height:150px; overflow-y:auto; margin-top:1rem;
+  border:1px solid var(--border);
+}
+.console p { margin-bottom:0.85rem; border-bottom:1px dashed var(--border); padding-bottom:6px;}
+.console .time { color:#64748b; margin-right:8px; font-weight:600; }
+
+/* Toasts */
+#toast-container { position:fixed; bottom:20px; right:20px; z-index:999; display:flex; flex-direction:column; gap:10px; }
+.toast { background:var(--card); border-left:4px solid var(--danger); padding:12px 20px; border-radius:8px; box-shadow:var(--shadow-md); font-size:0.85rem; font-weight:500; animation:slideIn 0.3s ease forwards; }
+@keyframes slideIn { from{transform:translateX(100%); opacity:0;} to{transform:translateX(0); opacity:1;} }
+</style>
+</head>
+<body>
+
+<!-- ── Header ───────────────────────────────────────────────────── -->
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="logo">
+      <div class="logo-ic">🛡️</div>
+      FraudGuard Monitor
+    </div>
+    <div class="status-badge" id="net-status">
+      <div class="status-indicator"></div>
+      <span id="net-text">Checking...</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Main Grid ─────────────────────────────────────────────────── -->
+<div class="wrap">
+  <div class="dash-header">
+    <div class="dash-title">
+      <h1>Dashboard Overview</h1>
+      <p>Real-time machine learning inference and episode tracking.</p>
+    </div>
+    <div class="dash-actions" id="last-updated">
+      Last Sync: Waiting...
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Card: Episode State -->
+    <div class="card">
+      <h3>Live Episode State</h3>
+      
+      <div id="state-body">
+        <div style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:2rem 0;">
+          Connecting to monitoring service...
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-labels">
+          <span>Data Intake</span>
+          <span>Model Inference</span>
+          <span>Final Verdict</span>
+        </div>
+        <div class="progress" id="progress">
+          <div class="step-dot" id="dot-0"></div>
+          <div class="step-dot" id="dot-1"></div>
+          <div class="step-dot" id="dot-2"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column Layout -->
+    <div style="display:flex; flex-direction:column; gap:1.5rem;">
+      
+      <!-- Right Card: System Requirements -->
+      <div class="card">
+        <h3>System Diagnostics</h3>
+        <ul class="sys-list" id="sys-req">
+          <li><span class="k">Backend API</span> <span class="sys-fail">Checking...</span></li>
+        </ul>
+      </div>
+
+      <!-- Right Card: Live Log -->
+      <div class="card">
+        <h3>Event Log</h3>
+        <div class="console" id="console-log">
+          <p><span class="time">System</span> Initializing dashboard...</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- ── JavaScript ─────────────────────────────────────────────────── -->
+<script>
+// ── Utilities ──────────────────────────────────────────────────────
+function getTimestamp() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+function updateLastSync() {
+    document.getElementById('last-updated').innerText = `Last Sync: ${getTimestamp()}`;
+}
+
+function logEvent(msg) {
+    const consoleEl = document.getElementById('console-log');
+    const p = document.createElement('p');
+    p.innerHTML = `<span class="time">[${getTimestamp()}]</span> ${msg}`;
+    consoleEl.prepend(p);
+    
+    // Keep log clean (max 50 lines)
+    if(consoleEl.children.length > 50) {
+        consoleEl.removeChild(consoleEl.lastChild);
+    }
+}
+
+function showToast(message) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+// ── Network online/offline status ──────────────────────────────────
+function updateNetStatus() {
+    const el = document.getElementById('net-status');
+    const txt = document.getElementById('net-text');
+    if (navigator.onLine) {
+        txt.textContent = 'Client Online';
+        el.className = 'status-badge live';
+        logEvent("Client network connection restored.");
+    } else {
+        txt.textContent = 'Client Offline';
+        el.className = 'status-badge offline';
+        logEvent("WARNING: Client lost internet connection.");
+        showToast("You are currently offline.");
+    }
+}
+window.addEventListener('online',  updateNetStatus);
+window.addEventListener('offline', updateNetStatus);
+updateNetStatus();
+
+// ── System Requirements check ──────────────────────────────────────
+async function fetchSys() {
+    if (!navigator.onLine) return; // Prevent fetching if offline
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+        const res = await fetch('/system', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const r = await res.json();
+        
+        const ul = document.getElementById('sys-req');
+        ul.innerHTML = `
+            <li>
+              <span class="k">Backend API</span>
+              <span class="sys-ok">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Connected
+              </span>
+            </li>
+            <li>
+              <span class="k">Active Model</span>
+              <span style="color:var(--accent);font-weight:700;">${r.model_name || 'N/A'}</span>
+            </li>
+            <li>
+              <span class="k">HuggingFace Token</span>
+              ${r.has_token
+                ? '<span class="sys-ok"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Present</span>'
+                : '<span class="sys-fail"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Missing</span>'}
+            </li>
+            <li>
+              <span class="k">Environment Variables</span>
+              ${r.env_loaded
+                ? '<span class="sys-ok"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Loaded</span>'
+                : '<span class="sys-fail"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Failed</span>'}
+            </li>
+        `;
+    } catch(e) {
+        document.getElementById('sys-req').innerHTML =
+            `<li><span class="k">Backend API</span><span class="sys-fail">Offline / Unreachable</span></li>`;
+        logEvent(`System check failed: ${e.message}`);
+    }
+}
+
+// ── Episode State polling ──────────────────────────────────────────
+async function poll() {
+    if (!navigator.onLine) return; // Pause polling if client is offline
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch('/state', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const s = await res.json();
+        
+        updateLastSync();
+        const b = document.getElementById('state-body');
+
+        // Safety checks for properties
+        const currentTask = s.current_task || 'Waiting';
+        const isDone = s.done || false;
+        const rewards = s.rewards || [];
+        const taskIndex = s.task_index || 0;
+        const steps = s.steps || 0;
+
+        // Decide label tag class
+        let labelClass = 'tag-pending';
+        if (currentTask === 'done' || isDone) {
+            labelClass = (rewards.length > 0 && rewards[0] === 1.0)
+                ? 'tag-fraud' : 'tag-legit';
+        }
+
+        // Verdict badge
+        let verdictHtml = '<span class="tag tag-pending">Processing...</span>';
+        if (rewards.length > 0) {
+            verdictHtml = rewards[0] === 1.0
+                ? '<span class="tag tag-fraud">🔴 FRAUD DETECTED</span>'
+                : '<span class="tag tag-legit">🟢 LEGITIMATE</span>';
+        }
+
+        b.innerHTML = `
+            <div class="kv">
+              <span class="k">Episode Active</span>
+              <span class="v">${s.episode_active ? '🟢 Running' : '🔴 Stopped'}</span>
+            </div>
+            <div class="kv">
+              <span class="k">Transaction ID</span>
+              <span class="v" style="color:var(--accent); font-family:monospace;">${s.transaction_id || 'Awaiting ID...'}</span>
+            </div>
+            <div class="kv">
+              <span class="k">Current Task</span>
+              <span class="v"><span class="tag ${labelClass}">${currentTask}</span></span>
+            </div>
+            <div class="kv">
+              <span class="k">Steps Evaluated</span>
+              <span class="v">${steps}</span>
+            </div>
+            
+            <div class="action-box">
+              <div>
+                <div class="action-box-title">AI VERDICT</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Confidence based on final reward</div>
+              </div>
+              <div>${verdictHtml}</div>
+            </div>
+        `;
+
+        // Step progress dots
+        for (let i = 0; i < 3; i++) {
+            const d = document.getElementById('dot-' + i);
+            if (d) {
+                d.className = 'step-dot' + (
+                    i < taskIndex  ? ' done'   :
+                    i === taskIndex && !isDone ? ' active' : ''
+                );
+            }
+        }
+    } catch(e) {
+        // Only log silently to console so UI doesn't break if backend isn't ready
+        console.warn('Poll error, retrying in next cycle:', e);
+    }
+}
+
+// ── Initialization ─────────────────────────────────────────────────
+fetchSys();
+poll();
+
+// Run intervals independently
+setInterval(fetchSys, 5000);
+setInterval(poll, 1500);
+
+</script>
+</body>
+</html>
