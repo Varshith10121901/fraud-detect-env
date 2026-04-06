@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fraud_detect_env"
+name = "fraud-detect-env"
 version = "1.0.0"
 description = "Bank Fraud Detection Agent"
 readme = "README.md"
@@ -23,9 +23,12 @@ authors = [
   { name="Meta Hackathon Team" }
 ]
 
-[tool.setuptools.packages.find]
-include = ["fraud_detect_env*"]
-
 [project.scripts]
-fraud-detect-server = "fraud_detect_env.server.app:main"
+server = "server.app:main"
 
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*"]
