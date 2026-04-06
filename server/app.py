@@ -936,3 +936,10 @@ function closeResults() {
             "Expires": "0"
         }
     )
+
+def main():
+    import uvicorn
+    uvicorn.run("fraud_detect_env.server.app:app", host="0.0.0.0", port=7860, reload=False)
+
+if __name__ == "__main__":
+    main()

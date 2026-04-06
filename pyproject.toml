@@ -25,3 +25,7 @@ authors = [
 
 [tool.setuptools.packages.find]
 include = ["fraud_detect_env*"]
+
+[project.scripts]
+fraud-detect-server = "fraud_detect_env.server.app:main"
+
