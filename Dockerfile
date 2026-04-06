@@ -1,16 +1,18 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
+
+RUN useradd -m -u 1000 user
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+COPY --chown=user . .
 
-# Expose port
-EXPOSE 8000
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-# Run the server
-CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 7860
+
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
