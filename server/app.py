@@ -149,15 +149,16 @@ class EpisodeState:
     @staticmethod
     def _score(task: str, response: str, truth: Dict[str, Any]) -> float:
         if task == "classify":
-            return 1.0 if response == truth.get("label") else 0.0
+            return 0.95 if response == truth.get("label") else 0.05
         if task == "identify_type":
-            return 1.0 if response == truth.get("fraud_type") else 0.0
+            return 0.90 if response == truth.get("fraud_type") else 0.05
         if task == "action_plan":
             required_keywords = ["RISK LEVEL", "RECOMMENDED ACTION", "NEXT STEPS", "DO NOT"]
             text_upper = response.upper()
             matches = sum(1 for kw in required_keywords if kw in text_upper)
-            return round(0.2 * matches, 2)
-        return 0.0
+            raw = 0.05 + 0.20 * matches
+            return round(min(0.85, max(0.05, raw)), 2)
+        return 0.05
 
     def to_dict(self) -> Dict[str, Any]:
         return {
