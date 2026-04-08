@@ -59,7 +59,7 @@ def main():
         detected_type = "CARD_NOT_PRESENT"
         done = False
         while not done:
-            current_task = obs.get("current_task", "done")
+            current_task = obs.get("task", obs.get("current_task", "done"))
             if current_task == "done": break
             error_str, action = "null", ""
             try:
