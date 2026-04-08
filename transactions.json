@@ -1,0 +1,102 @@
+[
+  {
+    "id": "TXN001",
+    "amount": 15000.00,
+    "merchant": "Electronics Paradise",
+    "location": "Mumbai",
+    "time": "2024-04-08T02:30:00",
+    "card_present": false,
+    "label": "FRAUD",
+    "fraud_type": "CARD_NOT_PRESENT"
+  },
+  {
+    "id": "TXN002",
+    "amount": 450.00,
+    "merchant": "Local Grocery",
+    "location": "Bangalore",
+    "time": "2024-04-08T10:15:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  },
+  {
+    "id": "TXN003",
+    "amount": 89000.00,
+    "merchant": "Luxury Watches International",
+    "location": "Dubai",
+    "time": "2024-04-08T04:45:00",
+    "card_present": false,
+    "label": "FRAUD",
+    "fraud_type": "HIGH_VALUE_OVERSEAS"
+  },
+  {
+    "id": "TXN004",
+    "amount": 1200.00,
+    "merchant": "Restaurant XYZ",
+    "location": "Delhi",
+    "time": "2024-04-08T20:00:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  },
+  {
+    "id": "TXN005",
+    "amount": 500.00,
+    "merchant": "Gas Station",
+    "location": "Pune",
+    "time": "2024-04-08T08:00:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  },
+  {
+    "id": "TXN006",
+    "amount": 35000.00,
+    "merchant": "Online Marketplace",
+    "location": "Unknown",
+    "time": "2024-04-08T03:20:00",
+    "card_present": false,
+    "label": "FRAUD",
+    "fraud_type": "ACCOUNT_TAKEOVER"
+  },
+  {
+    "id": "TXN007",
+    "amount": 2500.00,
+    "merchant": "Medical Store",
+    "location": "Chennai",
+    "time": "2024-04-08T14:30:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  },
+  {
+    "id": "TXN008",
+    "amount": 150.00,
+    "merchant": "Coffee Shop",
+    "location": "Hyderabad",
+    "time": "2024-04-08T09:00:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  },
+  {
+    "id": "TXN009",
+    "amount": 75000.00,
+    "merchant": "Cryptocurrency Exchange",
+    "location": "Singapore",
+    "time": "2024-04-08T01:15:00",
+    "card_present": false,
+    "label": "FRAUD",
+    "fraud_type": "CRYPTO_SCAM"
+  },
+  {
+    "id": "TXN010",
+    "amount": 8000.00,
+    "merchant": "Clothing Store",
+    "location": "Kolkata",
+    "time": "2024-04-08T16:45:00",
+    "card_present": true,
+    "label": "LEGIT",
+    "fraud_type": "NONE"
+  }
+]
