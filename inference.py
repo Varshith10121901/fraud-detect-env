@@ -7,7 +7,7 @@ from openai import OpenAI
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME",   "gpt-4.1-mini")
-HF_TOKEN     = os.getenv("HF_TOKEN")
+API_KEY      = os.getenv("API_KEY", os.getenv("HF_TOKEN", ""))
 ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
 
 SYSTEM_PROMPT = "You are a senior bank fraud analyst AI. Be precise and aggressive at catching fraud."
@@ -44,8 +44,8 @@ def extract_fraud_type(raw):
     return "CARD_NOT_PRESENT"
 
 def main():
-    if not HF_TOKEN: raise ValueError("HF_TOKEN environment variable is required")
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    if not API_KEY: raise ValueError("API_KEY environment variable is required")
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
     step, rewards = 0, []
     print(f"[START] task=fraud_detection env=fraud_detect_env model={MODEL_NAME}")
     try:
