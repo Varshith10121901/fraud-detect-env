@@ -2,8 +2,8 @@ spec_version: 1
 name: fraud-detect-env
 version: "1.0.0"
 description: >
-  Bank Fraud Detection Agent — AI-powered 3-task pipeline
-  (Classify → Identify Type → Action Plan).
+  Bank Fraud Detection Agent - AI-powered 3-task pipeline
+  (Classify -> Identify Type -> Action Plan).
 type: space
 runtime: fastapi
 app: server.app:app
@@ -14,13 +14,13 @@ tasks:
     description: "Classify a transaction as FRAUD or LEGIT"
     grader:
       type: reward_based
-      reward_range: [0.01, 0.99]
+      reward_range: [0.05, 0.95]
 
   - name: identify_type
     description: "Identify the type of fraud (CARD_NOT_PRESENT, ACCOUNT_TAKEOVER, etc.)"
     grader:
       type: reward_based
-      reward_range: [0.01, 0.99]
+      reward_range: [0.05, 0.90]
 
   - name: action_plan
     description: "Generate a structured fraud mitigation action plan"
