@@ -126,9 +126,8 @@ class EpisodeState:
 
         if task == "classify":
             self.predicted_label = response.strip().upper()
-            if self.predicted_label == "LEGIT":
-                self.done = True
-        elif self.task_index >= len(TASK_SEQUENCE):
+            # Always continue to all 3 tasks — do NOT short-circuit on LEGIT
+        if self.task_index >= len(TASK_SEQUENCE):
             self.done = True
             
         if self.done:
