@@ -3,7 +3,6 @@ import json
 import os
 import urllib.request
 import urllib.error
-from openai import OpenAI
 
 # Scaler / LiteLLM proxy config: DO NOT change these lines
 API_BASE_URL = os.environ["API_BASE_URL"]
@@ -31,9 +30,26 @@ def _post_json(url, data=None):
 def env_reset(): return _post_json(f"{ENV_BASE_URL}/reset")
 def env_step(task, response): return _post_json(f"{ENV_BASE_URL}/step", {"task": task, "response": response})
 
-def llm_call(client, prompt, max_tokens=256):
-    c = client.chat.completions.create(model=MODEL_NAME, messages=[{"role":"system","content":SYSTEM_PROMPT},{"role":"user","content":prompt}], max_tokens=max_tokens, temperature=0.1)
-    return c.choices[0].message.content.strip()
+def llm_call(prompt, max_tokens=256):
+    url = f"{API_BASE_URL.rstrip('/')}/chat/completions"
+    data = {
+        "model": MODEL_NAME,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.1
+    }
+    body = json.dumps(data).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        resp_json = json.loads(resp.read().decode("utf-8"))
+        return resp_json["choices"][0]["message"]["content"].strip()
 
 def extract_label(raw):
     u = raw.upper()
@@ -46,10 +62,6 @@ def extract_fraud_type(raw):
     return "CARD_NOT_PRESENT"
 
 def main():
-    client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=API_KEY,
-    )
     step, rewards = 0, []
     print(f"[START] task=fraud_detection env=fraud_detect_env model={MODEL_NAME}")
     try:
@@ -64,12 +76,12 @@ def main():
             error_str, action = "null", ""
             try:
                 if current_task == "classify":
-                    action = extract_label(llm_call(client, CLASSIFY_PROMPT.format(txn_json=txn_json), 10))
+                    action = extract_label(llm_call(CLASSIFY_PROMPT.format(txn_json=txn_json), 10))
                 elif current_task == "identify_type":
-                    action = extract_fraud_type(llm_call(client, IDENTIFY_TYPE_PROMPT.format(txn_json=txn_json), 20))
+                    action = extract_fraud_type(llm_call(IDENTIFY_TYPE_PROMPT.format(txn_json=txn_json), 20))
                     detected_type = action
                 elif current_task == "action_plan":
-                    action = llm_call(client, ACTION_PLAN_PROMPT.format(txn_json=txn_json, fraud_type=detected_type), 512)
+                    action = llm_call(ACTION_PLAN_PROMPT.format(txn_json=txn_json, fraud_type=detected_type), 512)
                 else:
                     action = "UNKNOWN"
             except Exception as exc:
