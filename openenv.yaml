@@ -1,7 +1,7 @@
 spec_version: 1
 name: fraud-detect-env
 version: "1.0.0"
-description: "Bank Fraud Detection Agent - 3-task RL pipeline"
+description: "Bank Fraud Detection RL Environment"
 type: space
 runtime: fastapi
 app: server.app:app
@@ -14,6 +14,7 @@ tasks:
     difficulty: easy
     max_steps: 1
     reward_range: [0.01, 0.99]
+    grader: "graders:grade_classify"
 
   - id: identify_type
     name: "Identify Fraud Type"
@@ -21,6 +22,7 @@ tasks:
     difficulty: medium
     max_steps: 1
     reward_range: [0.01, 0.99]
+    grader: "graders:grade_identify"
 
   - id: action_plan
     name: "Generate Action Plan"
@@ -28,3 +30,4 @@ tasks:
     difficulty: hard
     max_steps: 1
     reward_range: [0.05, 0.85]
+    grader: "graders:grade_action_plan"
