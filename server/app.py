@@ -185,7 +185,8 @@ def list_tasks():
                 "description": "Classify a bank transaction as FRAUD or LEGIT",
                 "difficulty": "easy",
                 "max_steps": 1,
-                "reward_range": [0.01, 0.99]
+                "reward_range": [0.01, 0.99],
+                "grader": "graders:grade_classify"
             },
             {
                 "id": "identify_type",
@@ -193,7 +194,8 @@ def list_tasks():
                 "description": "Identify the specific type of fraud",
                 "difficulty": "medium",
                 "max_steps": 1,
-                "reward_range": [0.01, 0.99]
+                "reward_range": [0.01, 0.99],
+                "grader": "graders:grade_identify"
             },
             {
                 "id": "action_plan",
@@ -201,7 +203,8 @@ def list_tasks():
                 "description": "Generate a structured fraud mitigation action plan",
                 "difficulty": "hard",
                 "max_steps": 1,
-                "reward_range": [0.05, 0.85]
+                "reward_range": [0.05, 0.85],
+                "grader": "graders:grade_action_plan"
             }
         ]
     }
